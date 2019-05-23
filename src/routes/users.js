@@ -12,21 +12,21 @@ router.post('/', (req, res) => {
     email: req.body.email,
   };
   res.status(201).json({
-    message: 'User was created',
+    message: 'user was created',
     user,
   });
 });
 
 router.get('/:id', (req, res) => {
   res.status(200).json({
-    message: 'User details',
+    message: 'user details',
     id: req.params.id,
   });
 });
 
 router.delete('/:id', (req, res) => {
   res.status(200).json({
-    message: 'User deleted',
+    message: 'user deleted',
     id: req.params.id,
   });
 });
