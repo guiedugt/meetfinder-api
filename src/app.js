@@ -1,13 +1,13 @@
 require('dotenv').config();
 
-const express = require('express');
-const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const compression = require('compression');
+const cookieParser = require('cookie-parser');
+const express = require('express');
 
 const configureDocs = require('./docs');
 const configureRoutes = require('./routes');
 const mongodb = require('./db/mongodb');
+const logger = require('./middleware/logger');
 const notFound = require('./middleware/notFound');
 const serverError = require('./middleware/serverError');
 
@@ -17,6 +17,7 @@ const port = process.env.PORT || '3000';
 
 app.set('port', port);
 
+app.use('/', logger);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -30,7 +31,6 @@ app.use((_req, res, next) => {
 configureDocs(app);
 configureRoutes(app);
 
-app.use(compression);
 app.use(mongodb.connect);
 app.use(notFound);
 app.use(serverError);
