@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run docs && node ./src/app.js",
     "dev": "npm run docs && nodemon ./src/app.js",
-    "docs": "./node_modules/apidoc/bin/apidoc -i src/routes -o src/docs/template --silent",
+    "docs": "./node_modules/apidoc/bin/apidoc -i src/routes -o docs --silent",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

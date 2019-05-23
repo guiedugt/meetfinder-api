@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
 
-const configureDocs = require('./docs');
 const configureRoutes = require('./routes');
 const mongodb = require('./db/mongodb');
 const cors = require('./middleware/cors');
@@ -15,7 +14,7 @@ const serverError = require('./middleware/serverError');
 const app = express();
 const port = process.env.PORT || '3000';
 
-configureDocs(app);
+
 configureRoutes(app);
 
 app.set('port', port);
@@ -26,6 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors);
 app.use(mongodb.connect);
+app.use(express.static('docs'));
 app.use(notFound);
 app.use(serverError);
 
