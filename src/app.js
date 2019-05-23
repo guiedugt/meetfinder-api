@@ -1,15 +1,17 @@
 require('dotenv').config();
 
-const app = require('express')();
+const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const compression = require('compression');
+
+const configureDocs = require('./docs');
+const configureRoutes = require('./routes');
 const mongodb = require('./db/mongodb');
 const notFound = require('./middleware/notFound');
 const serverError = require('./middleware/serverError');
-const configureRoutes = require('./routes');
 
-configureRoutes(app);
+const app = express();
 
 const port = process.env.PORT || '3000';
 
@@ -25,11 +27,12 @@ app.use((_req, res, next) => {
   next();
 });
 
+configureDocs(app);
+configureRoutes(app);
+
 app.use(compression);
 app.use(mongodb.connect);
 app.use(notFound);
 app.use(serverError);
 
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port} ...`);
-});
+app.listen(port, () => console.log(`Server is listening on port ${port} ...`));
