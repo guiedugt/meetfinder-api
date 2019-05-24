@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
-const connect = (_req, _res, next) => {
+mongoose.set('useCreateIndex', true);
+
+const mongodb = (_req, _res, next) => {
   const { MONGODB_USER, MONGODB_PASS } = process.env;
 
-  const url = `mongodb+srv://${MONGODB_USER}:${MONGODB_PASS}@meetfinder-lwoni.mongodb.net/test?retryWrites=true`;
+  const url = `mongodb+srv://${MONGODB_USER}:${MONGODB_PASS}@meetfinder-lwoni.mongodb.net/mongodb?retryWrites=true`;
   const config = {
     useNewUrlParser: true,
   };
@@ -13,4 +15,4 @@ const connect = (_req, _res, next) => {
   next();
 };
 
-module.exports = { connect };
+module.exports = mongodb;

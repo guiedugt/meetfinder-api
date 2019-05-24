@@ -15,8 +15,6 @@ const app = express();
 const port = process.env.PORT || '3000';
 
 
-configureRoutes(app);
-
 app.set('port', port);
 
 app.use(logger);
@@ -24,8 +22,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors);
-app.use(mongodb.connect);
+app.use(mongodb);
 app.use(express.static('docs'));
+
+configureRoutes(app);
+
 app.use(notFound);
 app.use(serverError);
 
