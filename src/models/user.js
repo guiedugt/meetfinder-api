@@ -8,6 +8,8 @@ const schema = mongoose.Schema({
   name: { type: String, required: true },
   email: { type: mongoose.Schema.Types.Email, required: true, unique: true },
   password: { type: String, required: true },
+  resetPasswordToken: String,
+  resetPasswordExpiration: Number,
 }, options);
 
 schema.method('toClient', function toClient() {
