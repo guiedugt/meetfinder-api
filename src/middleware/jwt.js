@@ -6,7 +6,7 @@ const authenticate = (req, res, next) => {
 
   return jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(500).send({ auth: false, message: 'Falha ao autenticar usuário' });
-    req.userId = decoded.id;
+    req.user = decoded;
     return next();
   });
 };

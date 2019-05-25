@@ -1,7 +1,5 @@
-const notFound = (_req, _res, next) => {
-  const error = new Error('Not found');
-  error.status = 404;
-  next(error);
+const notFound = (_req, res) => {
+  res.status(404).send({ error: 'Não encontrado' });
 };
 
 module.exports = notFound;
