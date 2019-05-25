@@ -80,8 +80,8 @@ router.post('/register', async (req, res) => {
 });
 
 /**
- * @api {post} /auth/password-recovery Password Recovery
- * @apiName PasswordRecovery
+ * @api {post} /auth/password-recovery Request Password Recovery
+ * @apiName RequestPasswordRecovery
  * @apiGroup Auth
  * @apiParam {String} email User email
  * @apiSuccess (204) 204 No Content
@@ -135,6 +135,14 @@ router.post('/password-recovery', async (req, res) => {
   });
 });
 
+/**
+ * @api {post} /password-recovery/:token Password Recovery
+ * @apiName PasswordRecover
+ * @apiGroup Auth
+ * @apiParam {String} token Password Recovery Token got from e mail
+ * @apiSuccess (204) 204 No Content
+ * @apiError (400) {String} error Error Message
+ */
 router.post('/password-recovery/:token', async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -153,7 +161,7 @@ router.post('/password-recovery/:token', async (req, res) => {
 
   return user.save((saveError) => {
     if (saveError) return res.status(400).send({ error: saveError.message });
-    return res.status(200).send(user.toClient());
+    return res.status(204).send();
   });
 });
 
