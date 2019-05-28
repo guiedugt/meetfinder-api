@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
   const skip = Math.max(0, page - 1) * limit;
   const pagination = { limit, skip };
 
-  const polls = await Poll.find({}, null, pagination).populate('owner')
+  const polls = await Poll.find({}, '+status', pagination).populate('owner')
     .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
   return res.status(200).send(polls);
@@ -76,7 +76,6 @@ router.post('/', async (req, res) => {
     _id: new mongoose.Types.ObjectId(),
     deadline,
     name,
-    status: 'voting',
     subjects,
     owner,
   });

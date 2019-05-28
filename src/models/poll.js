@@ -1,14 +1,19 @@
 const mongoose = require('mongoose');
 const User = require('./user');
 
-const options = { versionKey: false };
+const options = {
+  versionKey: false,
+};
 
 const schema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
-  deadline: { type: Date, required: true },
+  deadline: {
+    type: Date,
+    required: true,
+    validate: value => new Date(value) > Date.now(),
+  },
   name: { type: String, required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  status: { type: String, enum: ['voting', 'ended'], required: true },
   subjects: {
     type: [{
       name: { type: String, required: true },
@@ -18,8 +23,15 @@ const schema = mongoose.Schema({
   },
 }, options);
 
+schema.virtual('status').get(function getStatus() {
+  return Date.now() <= new Date(this.deadline)
+    ? 'voting'
+    : 'ended';
+});
+
+
 schema.method('toClient', function toClient() {
-  const model = this.toObject();
+  const model = this.toObject({ virtuals: true });
   model.id = model._id;
   delete model._id;
 
