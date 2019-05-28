@@ -87,8 +87,8 @@ router.post('/', async (req, res) => {
 });
 
 /**
- * @api {get} /polls/:id Get Poll
- * @apiName GetPoll
+ * @api {get} /polls/:id Find Poll
+ * @apiName FindPoll
  * @apiGroup Polls
  * @apiParam {String} id Poll id
  * @apiSuccess (200) {Poll} Poll Poll
@@ -103,10 +103,24 @@ router.get('/:id', async (req, res) => {
   return res.status(200).send(poll.toClient());
 });
 
-router.delete('/:id', (req, res) => {
-  res.status(200).json({
-    message: 'poll deleted',
-    id: req.params.id,
+/**
+ * @api {delete} /polls/:id Delete Poll
+ * @apiName DeletePoll
+ * @apiGroup Polls
+ * @apiParam {String} id Poll id
+ * @apiSuccess (204) 204 No Content
+ * @apiError (400) {String} error Error message
+ * @apiError (500) {String} error Error message
+ */
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const poll = await Poll.findById(id);
+  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+
+  return poll.delete((deleteError) => {
+    if (deleteError) return res.status(500).send({ error: deleteError.message });
+    return res.status(204).send();
   });
 });
 
