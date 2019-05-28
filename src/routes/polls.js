@@ -45,7 +45,7 @@ router.get('/mine', async (req, res) => {
   const skip = Math.max(0, page - 1) * limit;
   const pagination = { limit, skip };
 
-  const polls = await Poll.find({ owner }, null, pagination)
+  const polls = await Poll.find({ owner }, '+status', pagination).populate('owner')
     .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
   return res.status(200).send(polls);
