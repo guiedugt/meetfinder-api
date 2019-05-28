@@ -29,6 +29,8 @@ router.post('/register', async (req, res) => {
   const foundUser = await User.findOne({ email });
   if (foundUser) return res.status(409).send({ error: 'Já existe um usuário com esse email' });
 
+  if (password.length < 6) return res.status(400).send({ error: 'Senha deve ter ao menos 6 dígitos ' });
+
   const hash = await bcrypt.hash(password, 10);
 
   const buffer = await crypto.randomBytes(20);
@@ -189,6 +191,8 @@ router.post('/password-recovery/:token', async (req, res) => {
 
   if (!user) return res.status(400).send({ error: 'Link inválido ou expirado' });
 
+  if (password.length < 6) return res.status(400).send({ error: 'Senha deve ter ao menos 6 dígitos ' });
+
   const hash = await bcrypt.hash(password, 10);
   user.password = hash;
   user.resetPasswordToken = undefined;
@@ -214,6 +218,8 @@ router.post('/change-password', jwt, async (req, res) => {
 
   const user = await User.findById(req.user.id);
   if (!user) return res.status(500).send({ error: 'Usuário não encontrado' });
+
+  if (password.length < 6) return res.status(400).send({ error: 'Senha deve ter ao menos 6 dígitos ' });
 
   const hash = await bcrypt.hash(password, 10);
   user.password = hash;
