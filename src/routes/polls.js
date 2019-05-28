@@ -86,11 +86,21 @@ router.post('/', async (req, res) => {
   });
 });
 
-router.get('/:id', (req, res) => {
-  res.status(200).json({
-    message: 'poll details',
-    id: req.params.id,
-  });
+/**
+ * @api {get} /polls/:id Get Poll
+ * @apiName GetPoll
+ * @apiGroup Polls
+ * @apiParam {String} id Poll id
+ * @apiSuccess (200) {Poll} Poll Poll
+ * @apiError (400) {String} error Error Message
+ */
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const poll = await Poll.findById(id);
+  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+
+  return res.status(200).send(poll.toClient());
 });
 
 router.delete('/:id', (req, res) => {
