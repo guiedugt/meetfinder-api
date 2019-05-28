@@ -10,17 +10,27 @@ const User = require('../models/user');
  * @apiGroup Polls
  * @apiParam (Query String) {Number} page Page number
  * @apiParam (Query String) {Number} pageSize Page size
+ * @apiParam (Query String) {String} status Poll status
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Poll[]} 200 Polls
  */
 router.get('/', async (req, res) => {
-  const { page, pageSize } = req.query;
+  const { page, pageSize, status } = req.query;
 
   const limit = Number(pageSize || 10);
   const skip = Math.max(0, page - 1) * limit;
   const pagination = { limit, skip };
 
-  const polls = await Poll.find({}, '+status', pagination).populate('owner')
+  const statusQuery = ({
+    voting: { $gte: Date.now() },
+    ended: { $lt: Date.now() },
+  })[status];
+
+  const query = status
+    ? { deadline: statusQuery }
+    : {};
+
+  const polls = await Poll.find(query, '+status', pagination).populate('owner')
     .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
   return res.status(200).send(polls);
@@ -32,11 +42,12 @@ router.get('/', async (req, res) => {
  * @apiGroup Polls
  * @apiParam (Query String) {Number} page Page number
  * @apiParam (Query String) {Number} pageSize Page size
+ * @apiParam (Query String) {String} status Poll status
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Poll[]} 200 Polls
  */
 router.get('/mine', async (req, res) => {
-  const { page, pageSize } = req.params;
+  const { page, pageSize, status } = req.query;
 
   const owner = await User.findById(req.user.id);
   if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
@@ -45,7 +56,16 @@ router.get('/mine', async (req, res) => {
   const skip = Math.max(0, page - 1) * limit;
   const pagination = { limit, skip };
 
-  const polls = await Poll.find({ owner }, '+status', pagination).populate('owner')
+  const statusQuery = ({
+    voting: { $gte: Date.now() },
+    ended: { $lt: Date.now() },
+  })[status];
+
+  const query = status
+    ? { deadline: statusQuery, owner }
+    : { owner };
+
+  const polls = await Poll.find(query, '+status', pagination).populate('owner')
     .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
   return res.status(200).send(polls);
