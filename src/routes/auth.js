@@ -18,15 +18,15 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (!user) return res.status(400).send({ error: 'Email e/ou senha inválido(s)' });
+  if (!user.active) return res.status(400).send({ error: 'É preciso confirmar seu email para continuar' });
 
   return bcrypt.compare(password, user.password, (err, match) => {
     if (match) {
       const { JWT_SECRET, JWT_EXPIRATION } = process.env;
       const token = jwt.sign(user.toClient(), JWT_SECRET, { expiresIn: JWT_EXPIRATION });
-      res.status(200).send({ auth: true, token });
-    } else {
-      return res.status(400).send({ error: 'Email e/ou senha inválido(s)' });
+      return res.status(200).send({ auth: true, token });
     }
+    return res.status(400).send({ error: 'Email e/ou senha inválido(s)' });
   });
 });
 
