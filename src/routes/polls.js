@@ -144,4 +144,47 @@ router.delete('/:id', async (req, res) => {
   });
 });
 
+/**
+ * @api {post} /:id/vote Vote Poll
+ * @apiName Vote Poll
+ * @apiGroup Polls
+ * @apiHeader {String} x-token Authentication token
+ * @apiParam {String} { subject: { name }} Subject name
+ * @apiSuccess (200) {Poll} Poll Updated Poll
+ * @apiError (400) {String} error Error message
+ * @apiError (500) {String} error Error message
+*/
+router.post('/:id/vote', async (req, res) => {
+  const { id } = req.params;
+  const { subject: { name } } = req.body;
+
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(500).send({ error: 'Usuário não encontrado' });
+
+  const poll = await Poll.findById(id).populate('owner').populate('subjects.voters');
+  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+
+  const subject = poll.subjects.find(s => s.name === name);
+  if (!subject) return res.status(400).send({ error: 'Tema não encontrado' });
+
+  const votedSubject = poll.subjects.find(s => s.voters.find(v => v.id === req.user.id));
+  if (votedSubject) {
+    const voterIndex = votedSubject.voters.findIndex(v => v.id === req.user.id);
+    const votedSubjectIndex = poll.subjects.findIndex(s => s.id === votedSubject.id);
+
+    votedSubject.voters.splice(voterIndex, 1);
+    poll.subjects[votedSubjectIndex] = votedSubject;
+  }
+
+  if (votedSubject && votedSubject.name === name) {
+    await poll.save();
+    return res.status(200).send(poll.toClient());
+  }
+
+  poll.subjects.find(s => s.name === name).voters.push(user);
+
+  await poll.save();
+  return res.status(200).send(poll.toClient());
+});
+
 module.exports = router;
