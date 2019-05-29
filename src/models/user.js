@@ -19,6 +19,7 @@ schema.method('toClient', function toClient() {
   const model = this.toObject();
   model.id = model._id;
   delete model._id;
+  delete model.active;
   delete model.password;
   delete model.confirmEmailToken;
   delete model.confirmEmailExpiration;
