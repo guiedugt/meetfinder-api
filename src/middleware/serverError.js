@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
-const serverError = (error, _req, res, _next) => {
-  res.status(error.status || 500);
-  res.send({ error: error.message });
+const serverError = (err, _req, res, _next) => {
+  console.error(err.stack);
+  res.status(500).send({ error: err.message });
 };
 
 module.exports = serverError;

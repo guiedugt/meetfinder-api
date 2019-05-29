@@ -14,26 +14,30 @@ const User = require('../models/user');
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Poll[]} 200 Polls
  */
-router.get('/', async (req, res) => {
-  const { page, pageSize, status } = req.query;
+router.get('/', async (req, res, next) => {
+  try {
+    const { page, pageSize, status } = req.query;
 
-  const limit = Number(pageSize || 10);
-  const skip = Math.max(0, page - 1) * limit;
-  const pagination = { limit, skip };
+    const limit = Number(pageSize || 10);
+    const skip = Math.max(0, page - 1) * limit;
+    const pagination = { limit, skip };
 
-  const statusQuery = ({
-    voting: { $gte: Date.now() },
-    ended: { $lt: Date.now() },
-  })[status];
+    const statusQuery = ({
+      voting: { $gte: Date.now() },
+      ended: { $lt: Date.now() },
+    })[status];
 
-  const query = status
-    ? { deadline: statusQuery }
-    : {};
+    const query = status
+      ? { deadline: statusQuery }
+      : {};
 
-  const polls = await Poll.find(query, '+status', pagination).populate('owner')
-    .then(pollList => pollList.map(poll => Poll(poll).toClient()));
+    const polls = await Poll.find(query, '+status', pagination).populate('owner')
+      .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
-  return res.status(200).send(polls);
+    return res.status(200).send(polls);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -46,29 +50,33 @@ router.get('/', async (req, res) => {
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Poll[]} 200 Polls
  */
-router.get('/mine', async (req, res) => {
-  const { page, pageSize, status } = req.query;
+router.get('/mine', async (req, res, next) => {
+  try {
+    const { page, pageSize, status } = req.query;
 
-  const owner = await User.findById(req.user.id);
-  if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
+    const owner = await User.findById(req.user.id);
+    if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
 
-  const limit = Number(pageSize || 10);
-  const skip = Math.max(0, page - 1) * limit;
-  const pagination = { limit, skip };
+    const limit = Number(pageSize || 10);
+    const skip = Math.max(0, page - 1) * limit;
+    const pagination = { limit, skip };
 
-  const statusQuery = ({
-    voting: { $gte: Date.now() },
-    ended: { $lt: Date.now() },
-  })[status];
+    const statusQuery = ({
+      voting: { $gte: Date.now() },
+      ended: { $lt: Date.now() },
+    })[status];
 
-  const query = status
-    ? { deadline: statusQuery, owner }
-    : { owner };
+    const query = status
+      ? { deadline: statusQuery, owner }
+      : { owner };
 
-  const polls = await Poll.find(query, '+status', pagination).populate('owner')
-    .then(pollList => pollList.map(poll => Poll(poll).toClient()));
+    const polls = await Poll.find(query, '+status', pagination).populate('owner')
+      .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
-  return res.status(200).send(polls);
+    return res.status(200).send(polls);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -83,27 +91,31 @@ router.get('/mine', async (req, res) => {
  * @apiError (400) {String} error Error Message
  * @apiError (500) {String} error Error Message
  */
-router.post('/', async (req, res) => {
-  const { deadline, name, subjects } = req.body;
+router.post('/', async (req, res, next) => {
+  try {
+    const { deadline, name, subjects } = req.body;
 
-  if (!deadline) return res.status(400).send({ error: 'É preciso definir uma data para o fim da votação' });
-  if (!subjects || subjects.length === 0) return res.status(400).send({ error: 'Deve haver ao menos 1 tema para votação' });
+    if (!deadline) return res.status(400).send({ error: 'É preciso definir uma data para o fim da votação' });
+    if (!subjects || subjects.length === 0) return res.status(400).send({ error: 'Deve haver ao menos 1 tema para votação' });
 
-  const owner = await User.findById(req.user.id);
-  if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
+    const owner = await User.findById(req.user.id);
+    if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
 
-  const poll = new Poll({
-    _id: new mongoose.Types.ObjectId(),
-    deadline,
-    name,
-    subjects,
-    owner,
-  });
+    const poll = new Poll({
+      _id: new mongoose.Types.ObjectId(),
+      deadline,
+      name,
+      subjects,
+      owner,
+    });
 
-  return poll.save((saveError) => {
-    if (saveError) return res.status(500).send({ error: saveError.message });
-    return res.status(201).send(poll.toClient());
-  });
+    return poll.save((saveError) => {
+      if (saveError) return res.status(500).send({ error: saveError.message });
+      return res.status(201).send(poll.toClient());
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -114,13 +126,17 @@ router.post('/', async (req, res) => {
  * @apiSuccess (200) {Poll} Poll Poll
  * @apiError (400) {String} error Error Message
  */
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
 
-  const poll = await Poll.findById(id);
-  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+    const poll = await Poll.findById(id);
+    if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
 
-  return res.status(200).send(poll.toClient());
+    return res.status(200).send(poll.toClient());
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -132,16 +148,20 @@ router.get('/:id', async (req, res) => {
  * @apiError (400) {String} error Error message
  * @apiError (500) {String} error Error message
  */
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
 
-  const poll = await Poll.findById(id);
-  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+    const poll = await Poll.findById(id);
+    if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
 
-  return poll.delete((deleteError) => {
-    if (deleteError) return res.status(500).send({ error: deleteError.message });
-    return res.status(204).send();
-  });
+    return poll.delete((deleteError) => {
+      if (deleteError) return res.status(500).send({ error: deleteError.message });
+      return res.status(204).send();
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -154,37 +174,41 @@ router.delete('/:id', async (req, res) => {
  * @apiError (400) {String} error Error message
  * @apiError (500) {String} error Error message
 */
-router.post('/:id/vote', async (req, res) => {
-  const { id } = req.params;
-  const { subject: { name } } = req.body;
+router.post('/:id/vote', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { subject: { name } } = req.body;
 
-  const user = await User.findById(req.user.id);
-  if (!user) return res.status(500).send({ error: 'Usuário não encontrado' });
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(500).send({ error: 'Usuário não encontrado' });
 
-  const poll = await Poll.findById(id).populate('owner').populate('subjects.voters');
-  if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+    const poll = await Poll.findById(id).populate('owner').populate('subjects.voters');
+    if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
 
-  const subject = poll.subjects.find(s => s.name === name);
-  if (!subject) return res.status(400).send({ error: 'Tema não encontrado' });
+    const subject = poll.subjects.find(s => s.name === name);
+    if (!subject) return res.status(400).send({ error: 'Tema não encontrado' });
 
-  const votedSubject = poll.subjects.find(s => s.voters.find(v => v.id === req.user.id));
-  if (votedSubject) {
-    const voterIndex = votedSubject.voters.findIndex(v => v.id === req.user.id);
-    const votedSubjectIndex = poll.subjects.findIndex(s => s.id === votedSubject.id);
+    const votedSubject = poll.subjects.find(s => s.voters.find(v => v.id === req.user.id));
+    if (votedSubject) {
+      const voterIndex = votedSubject.voters.findIndex(v => v.id === req.user.id);
+      const votedSubjectIndex = poll.subjects.findIndex(s => s.id === votedSubject.id);
 
-    votedSubject.voters.splice(voterIndex, 1);
-    poll.subjects[votedSubjectIndex] = votedSubject;
-  }
+      votedSubject.voters.splice(voterIndex, 1);
+      poll.subjects[votedSubjectIndex] = votedSubject;
+    }
 
-  if (votedSubject && votedSubject.name === name) {
+    if (votedSubject && votedSubject.name === name) {
+      await poll.save();
+      return res.status(200).send(poll.toClient());
+    }
+
+    poll.subjects.find(s => s.name === name).voters.push(user);
+
     await poll.save();
     return res.status(200).send(poll.toClient());
+  } catch (err) {
+    next(err);
   }
-
-  poll.subjects.find(s => s.name === name).voters.push(user);
-
-  await poll.save();
-  return res.status(200).send(poll.toClient());
 });
 
 module.exports = router;
