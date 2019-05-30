@@ -86,7 +86,7 @@ router.get('/mine', async (req, res, next) => {
  * @apiHeader {String} x-token Authentication token
  * @apiParam {String} name Poll name
  * @apiParam {Date} deadline Poll deadline
- * @apiParam {Object[]} subjects Subjects
+ * @apiParam {String[]} subjects Subjects
  * @apiSuccess (201) {Poll} poll Created Poll
  * @apiError (400) {String} error Error Message
  * @apiError (500) {String} error Error Message
@@ -96,6 +96,9 @@ router.post('/', async (req, res, next) => {
     const { deadline, name, subjects } = req.body;
 
     if (!deadline) return res.status(400).send({ error: 'É preciso definir uma data para o fim da votação' });
+    if (new Date(deadline).toString() === 'Invalid Date') return res.status(400).send({ error: 'Data do fim da votação inválida' });
+    if (new Date(deadline) < Date.now()) return res.status(400).send({ error: 'Data do fim da votação deve ser no futuro' });
+    if (!name) return res.status(400).send({ error: 'É preciso definir um nome para a enquete' });
     if (!subjects || subjects.length === 0) return res.status(400).send({ error: 'Deve haver ao menos 1 tema para votação' });
 
     const owner = await User.findById(req.user.id);
@@ -103,9 +106,9 @@ router.post('/', async (req, res, next) => {
 
     const poll = new Poll({
       _id: new mongoose.Types.ObjectId(),
+      subjects: subjects.map(s => ({ name: s, voters: [] })),
       deadline,
       name,
-      subjects,
       owner,
     });
 
@@ -143,7 +146,7 @@ router.get('/:id', async (req, res, next) => {
  * @api {delete} /polls/:id Delete Poll
  * @apiName DeletePoll
  * @apiGroup Polls
- * @apiParam {String} id Poll id
+ * @apiParam (Param) {String} id Poll id
  * @apiSuccess (204) 204 No Content
  * @apiError (400) {String} error Error message
  * @apiError (500) {String} error Error message
@@ -169,7 +172,8 @@ router.delete('/:id', async (req, res, next) => {
  * @apiName Vote Poll
  * @apiGroup Polls
  * @apiHeader {String} x-token Authentication token
- * @apiParam {String} { subject: { name }} Subject name
+ * @apiParam (Param) {String} id Poll id
+ * @apiParam {String} name Subject name
  * @apiSuccess (200) {Poll} Poll Updated Poll
  * @apiError (400) {String} error Error message
  * @apiError (500) {String} error Error message
@@ -177,7 +181,7 @@ router.delete('/:id', async (req, res, next) => {
 router.post('/:id/vote', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { subject: { name } } = req.body;
+    const { name } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(500).send({ error: 'Usuário não encontrado' });
@@ -203,6 +207,50 @@ router.post('/:id/vote', async (req, res, next) => {
     }
 
     poll.subjects.find(s => s.name === name).voters.push(user);
+
+    await poll.save();
+    return res.status(200).send(poll.toClient());
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @api {put} /polls/:id Update Poll
+ * @apiName UpdatePoll
+ * @apiGroup Polls
+ * @apiParam (Param) {String} id Poll id
+ * @apiHeader {String} x-token Authentication token
+ * @apiParam {Date} deadline Poll deadline
+ * @apiParam {String} name Poll name
+ * @apiParam {String[]} subjects Poll subjects
+ * @apiSuccess (200) {Poll} Poll Updated poll
+ * @apiError (400) {String} error Error message
+ * @apiError (500) {String} error Error message
+ */
+router.put('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { deadline, name, subjects } = req.body;
+
+    if (deadline) {
+      if (new Date(deadline).toString() === 'Invalid Date') return res.status(400).send({ error: 'Data do fim da votação inválida' });
+      if (new Date(deadline) < Date.now()) return res.status(400).send({ error: 'Data do fim da votação deve ser no futuro' });
+    }
+
+    if (subjects && subjects.length === 0) return res.status(400).send({ error: 'Deve haver ao menos 1 tema para votação' });
+
+    const poll = await Poll.findById(id).populate('owner');
+    if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+
+    const owner = await User.findById(req.user.id);
+
+    if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
+    if (owner.id !== req.user.id) return res.status(400).send({ error: 'Você não é o dono dessa enquete' });
+
+    if (deadline) poll.deadline = deadline;
+    if (name) poll.name = name;
+    if (subjects && subjects.length) poll.subjects = subjects.map(s => ({ name: s, voters: [] }));
 
     await poll.save();
     return res.status(200).send(poll.toClient());
