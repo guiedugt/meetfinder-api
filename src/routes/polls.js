@@ -31,7 +31,7 @@ router.get('/', async (req, res, next) => {
       ? { deadline: statusQuery }
       : {};
 
-    const polls = await Poll.find(query, '+status', pagination).populate('owner')
+    const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
       .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
     return res.status(200).send(polls);
@@ -70,7 +70,7 @@ router.get('/mine', async (req, res, next) => {
       ? { deadline: statusQuery, owner }
       : { owner };
 
-    const polls = await Poll.find(query, '+status', pagination).populate('owner')
+    const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
       .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
     return res.status(200).send(polls);
@@ -133,7 +133,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const poll = await Poll.findById(id);
+    const poll = await Poll.findById(id).populate('owner').populate('subjects.voters');
     if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
 
     return res.status(200).send(poll.toClient());
@@ -188,6 +188,7 @@ router.post('/:id/vote', async (req, res, next) => {
 
     const poll = await Poll.findById(id).populate('owner').populate('subjects.voters');
     if (!poll) return res.status(400).send({ error: 'Enquete não encontrada' });
+    if (poll.status !== 'voting') return res.status(400).send({ error: 'Enquete não está em votação' });
 
     const subject = poll.subjects.find(s => s.name === name);
     if (!subject) return res.status(400).send({ error: 'Tema não encontrado' });
