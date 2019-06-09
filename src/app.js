@@ -3,10 +3,10 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
+const cors = require('cors');
 
 const configureRoutes = require('./routes');
 const mongodb = require('./db/mongodb');
-const cors = require('./middleware/cors');
 const logger = require('./middleware/logger');
 const notFound = require('./middleware/notFound');
 const serverError = require('./middleware/serverError');
@@ -17,11 +17,11 @@ const port = process.env.PORT || '3000';
 
 app.set('port', port);
 
+app.use(cors());
 app.use(logger);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(cors);
 app.use(mongodb);
 app.use(express.static('docs'));
 
