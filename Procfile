@@ -1,0 +1,1 @@
+web: npm install && npm run docs && node ./src/app.js
