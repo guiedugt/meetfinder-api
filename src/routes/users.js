@@ -158,7 +158,7 @@ router.post('/password-recovery', async (req, res, next) => {
     const { RESET_PASSWORD_TOKEN_EXPIRATION, UI_HOST } = process.env;
 
     const user = await User.findOne({ email });
-    if (!user) return res.send(400).send({ error: 'Email inválido' });
+    if (!user) return res.status(400).send({ error: 'Email não encontrado' });
 
     const buffer = await crypto.randomBytes(20);
     const token = buffer.toString('hex');
