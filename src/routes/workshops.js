@@ -238,7 +238,7 @@ router.delete('/:id', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { date, name } = req.body;
+    const { date } = req.body;
 
     if (date) {
       if (new Date(date).toString() === 'Invalid Date') return res.status(400).send({ error: 'Data do workshop inválida' });
@@ -261,7 +261,6 @@ router.put('/:id', async (req, res, next) => {
     if (!workshop.status === 'ended') return res.status(400).send({ error: 'Workshop já foi encerrado' });
 
     if (date) workshop.date = date;
-    if (name) workshop.name = name;
 
     await workshop.save();
 
