@@ -31,9 +31,12 @@ router.get('/', async (req, res, next) => {
     const skip = Math.max(0, page - 1) * limit;
     const pagination = { limit, skip };
 
+    const deadline = new Date();
+    deadline.setHours(deadline.getHours() + 6);
+
     const statusQuery = ({
-      scheduled: { $gte: Date.now() },
-      ended: { $lt: Date.now() },
+      scheduled: { $gte: deadline },
+      ended: { $lt: deadline },
     })[status];
 
     const query = {};
@@ -76,9 +79,12 @@ router.get('/mine', async (req, res, next) => {
     const skip = Math.max(0, page - 1) * limit;
     const pagination = { limit, skip };
 
+    const deadline = new Date();
+    deadline.setHours(deadline.getHours() + 6);
+
     const statusQuery = ({
-      scheduled: { $gte: Date.now() },
-      ended: { $lt: Date.now() },
+      scheduled: { $gte: deadline },
+      ended: { $lt: deadline },
     })[status];
 
     const query = { owner };
