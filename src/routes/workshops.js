@@ -46,7 +46,9 @@ router.get('/', async (req, res, next) => {
     const workshops = await Workshop.find(query, '+status', pagination).populate('owner').populate('poll')
       .then(workshopList => workshopList.map(workshop => Workshop(workshop).toClient()));
 
-    return res.status(200).send(workshops);
+    const count = await Workshop.count();
+
+    return res.status(200).set('x-count', count).send(workshops);
   } catch (err) {
     next(err);
   }
@@ -94,7 +96,9 @@ router.get('/mine', async (req, res, next) => {
     const workshops = await Workshop.find(query, '+status', pagination).populate('owner').populate('poll')
       .then(workshopList => workshopList.map(workshop => Workshop(workshop).toClient()));
 
-    return res.status(200).send(workshops);
+    const count = await Workshop.count();
+
+    return res.status(200).set('x-count', count).send(workshops);
   } catch (err) {
     next(err);
   }

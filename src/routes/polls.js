@@ -45,7 +45,9 @@ router.get('/', async (req, res, next) => {
     const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
       .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
-    return res.status(200).send(polls);
+    const count = await Poll.count();
+
+    return res.status(200).set('x-count', count).send(polls);
   } catch (err) {
     next(err);
   }
@@ -95,7 +97,9 @@ router.get('/mine', async (req, res, next) => {
     const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
       .then(pollList => pollList.map(poll => Poll(poll).toClient()));
 
-    return res.status(200).send(polls);
+    const count = await Poll.count();
+
+    return res.status(200).set('x-count', count).send(polls);
   } catch (err) {
     next(err);
   }
