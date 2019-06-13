@@ -10,6 +10,7 @@ const mongodb = (_req, _res, next) => {
     useNewUrlParser: true,
   };
 
+  mongoose.set('useFindAndModify', false);
   mongoose.connect(url, config);
 
   next();

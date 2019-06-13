@@ -140,6 +140,8 @@ router.post('/', async (req, res, next) => {
 
     await workshop.save();
 
+    await Poll.findOneAndUpdate({ _id: poll.id }, { workshop });
+
     const voters = poll.subjects.reduce((acc, cur) => [...acc, ...cur.voters], []);
 
     voters.forEach((voter) => {

@@ -14,6 +14,7 @@ const schema = mongoose.Schema({
   },
   name: { type: String, required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  workshop: { type: mongoose.Schema.Types.ObjectId, ref: 'Workshop' },
   subjects: {
     type: [{
       name: { type: String, required: true },
@@ -24,6 +25,7 @@ const schema = mongoose.Schema({
 }, options);
 
 schema.virtual('status').get(function getStatus() {
+  if (this.workshop) return 'scheduled';
   return Date.now() <= new Date(this.deadline)
     ? 'voting'
     : 'ended';
@@ -34,6 +36,8 @@ schema.method('toClient', function toClient() {
   const model = this.toObject({ virtuals: true });
   model.id = model._id;
   delete model._id;
+
+  delete model.workshop;
 
   model.owner = User(model.owner).toClient();
 
