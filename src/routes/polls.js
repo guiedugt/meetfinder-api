@@ -28,13 +28,18 @@ router.get('/', async (req, res, next) => {
     const skip = Math.max(0, page - 1) * limit;
     const pagination = { limit, skip };
 
-    const statusQuery = ({
-      voting: { $gte: Date.now() },
-      ended: { $lt: Date.now() },
-    })[status];
 
     const query = {};
-    if (status) query.deadline = statusQuery;
+
+    if (status) {
+      const or = [];
+      const statuses = status.split(',');
+      if (statuses.includes('voting')) or.push({ deadline: { $gte: Date.now() }, workshop: { $exists: false } });
+      if (statuses.includes('ended')) or.push({ deadline: { $lt: Date.now() }, workshop: { $exists: false } });
+      if (statuses.includes('scheduled')) or.push({ workshop: { $exists: true } });
+      query.$or = or;
+    }
+
     if (filter) query.name = { $regex: new RegExp(filter, 'i') };
 
     const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
@@ -73,13 +78,18 @@ router.get('/mine', async (req, res, next) => {
     const skip = Math.max(0, page - 1) * limit;
     const pagination = { limit, skip };
 
-    const statusQuery = ({
-      voting: { $gte: Date.now() },
-      ended: { $lt: Date.now() },
-    })[status];
-
     const query = { owner };
-    if (status) query.deadline = statusQuery;
+
+
+    if (status) {
+      const or = [];
+      const statuses = status.split(',');
+      if (statuses.includes('voting')) or.push({ deadline: { $gte: Date.now() }, workshop: { $exists: false } });
+      if (statuses.includes('ended')) or.push({ deadline: { $lt: Date.now() }, workshop: { $exists: false } });
+      if (statuses.includes('scheduled')) or.push({ workshop: { $exists: true } });
+      query.$or = or;
+    }
+
     if (filter) query.name = { $regex: new RegExp(filter, 'i') };
 
     const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
