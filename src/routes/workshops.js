@@ -14,12 +14,18 @@ const mail = require('../utils/mail');
  * @apiParam (Query String) {Number} page Page number
  * @apiParam (Query String) {Number} pageSize Page size
  * @apiParam (Query String) {String} status Workshop status
+ * @apiParam (Query String) {String} filter Workshop name filter
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Workshop[]} 200 Workshops
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { page, pageSize, status } = req.query;
+    const {
+      page,
+      pageSize,
+      status,
+      filter,
+    } = req.query;
 
     const limit = Number(pageSize || 10);
     const skip = Math.max(0, page - 1) * limit;
@@ -30,9 +36,9 @@ router.get('/', async (req, res, next) => {
       ended: { $lt: Date.now() },
     })[status];
 
-    const query = status
-      ? { date: statusQuery }
-      : {};
+    const query = {};
+    if (status) query.date = statusQuery;
+    if (filter) query.name = { $regex: new RegExp(filter, 'i') };
 
     const workshops = await Workshop.find(query, '+status', pagination).populate('owner').populate('poll')
       .then(workshopList => workshopList.map(workshop => Workshop(workshop).toClient()));
@@ -50,12 +56,18 @@ router.get('/', async (req, res, next) => {
  * @apiParam (Query String) {Number} page Page number
  * @apiParam (Query String) {Number} pageSize Page size
  * @apiParam (Query String) {String} status Workshop status
+ * @apiParam (Query String) {String} filter Workshop name filter
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Workshop[]} 200 Workshops
  */
 router.get('/mine', async (req, res, next) => {
   try {
-    const { page, pageSize, status } = req.query;
+    const {
+      page,
+      pageSize,
+      status,
+      filter,
+    } = req.query;
 
     const owner = await User.findById(req.user.id);
     if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
@@ -69,9 +81,9 @@ router.get('/mine', async (req, res, next) => {
       ended: { $lt: Date.now() },
     })[status];
 
-    const query = status
-      ? { date: statusQuery, owner }
-      : {};
+    const query = { owner };
+    if (status) query.date = statusQuery;
+    if (filter) query.name = { $regex: new RegExp(filter, 'i') };
 
     const workshops = await Workshop.find(query, '+status', pagination).populate('owner').populate('poll')
       .then(workshopList => workshopList.map(workshop => Workshop(workshop).toClient()));
@@ -87,7 +99,6 @@ router.get('/mine', async (req, res, next) => {
  * @apiName CreateWorkshop
  * @apiGroup Workshops
  * @apiHeader {String} x-token Authentication token
- * @apiParam {String} name Workshop name
  * @apiParam {Date} date Workshop date
  * @apiParam {String} pollId poll id
  * @apiSuccess (201) {Workshop} Workshop Created Workshop
@@ -96,13 +107,12 @@ router.get('/mine', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    const { date, name, pollId } = req.body;
+    const { date, pollId } = req.body;
     const { ROOM_BASE_URL } = process.env;
 
     if (!date) return res.status(400).send({ error: 'É preciso definir uma data para o workshop' });
     if (new Date(date).toString() === 'Invalid Date') return res.status(400).send({ error: 'Data inválida' });
     if (new Date(date) < Date.now()) return res.status(400).send({ error: 'Data deve ser no futuro' });
-    if (!name) return res.status(400).send({ error: 'É preciso definir um nome para o workshop' });
     if (!pollId) return res.status(400).send({ error: 'É preciso definir a qual enquete esse workshop se refere' });
 
     const owner = await User.findById(req.user.id);
@@ -121,9 +131,9 @@ router.post('/', async (req, res, next) => {
     const workshop = new Workshop({
       _id: new mongoose.Types.ObjectId(),
       subject: mostVotedSubject.name,
+      name: poll.name,
       room,
       date,
-      name,
       owner,
       poll,
     });
