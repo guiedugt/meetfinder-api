@@ -17,7 +17,12 @@ const User = require('../models/user');
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { page, pageSize, status, filter } = req.query;
+    const {
+      page,
+      pageSize,
+      status,
+      filter,
+    } = req.query;
 
     const limit = Number(pageSize || 10);
     const skip = Math.max(0, page - 1) * limit;
@@ -48,12 +53,18 @@ router.get('/', async (req, res, next) => {
  * @apiParam (Query String) {Number} page Page number
  * @apiParam (Query String) {Number} pageSize Page size
  * @apiParam (Query String) {String} status Poll status
+ * @apiParam (Query String) {String} filter Poll name filter
  * @apiHeader {String} x-token Authentication token
  * @apiSuccess (200) {Poll[]} 200 Polls
  */
 router.get('/mine', async (req, res, next) => {
   try {
-    const { page, pageSize, status } = req.query;
+    const {
+      page,
+      pageSize,
+      status,
+      filter,
+    } = req.query;
 
     const owner = await User.findById(req.user.id);
     if (!owner) return res.status(500).send({ error: 'Usuário não encontrado' });
@@ -67,9 +78,9 @@ router.get('/mine', async (req, res, next) => {
       ended: { $lt: Date.now() },
     })[status];
 
-    const query = status
-      ? { deadline: statusQuery, owner }
-      : { owner };
+    const query = { owner };
+    if (status) query.deadline = statusQuery;
+    if (filter) query.name = { $regex: new RegExp(filter, 'i') };
 
     const polls = await Poll.find(query, '+status', pagination).populate('owner').populate('subjects.voters')
       .then(pollList => pollList.map(poll => Poll(poll).toClient()));
