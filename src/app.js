@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const configureRoutes = require('./routes');
 const mongodb = require('./db/mongodb');
@@ -26,6 +27,7 @@ app.use(mongodb);
 app.use(express.static('docs'));
 
 configureRoutes(app);
+mongoose.disconnect();
 
 app.use(notFound);
 app.use(serverError);
